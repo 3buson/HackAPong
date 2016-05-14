@@ -24,10 +24,6 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".MultipleMyosActivity"
-            android:label="@string/title_activity_multiple_myos" >
-        </activity>
-        <activity
             android:name=".PingPongActivity"
             android:label="@string/title_activity_ping_pong" >
         </activity>
