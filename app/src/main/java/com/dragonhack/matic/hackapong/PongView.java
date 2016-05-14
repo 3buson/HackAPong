@@ -46,7 +46,6 @@ public class PongView extends View implements OnTouchListener, OnKeyListener, On
 
     public static enum State {Running, Stopped}
 
-
     private boolean initialized = false;        // Exists to initialize the View when getWidth() and getHeight() are known
     private boolean requestNewRound = true;        // Setting this to true will start a new round on the next game loop pass
     private boolean showTitle = true;            // Overlay the Pong logo over a computerized game
@@ -114,6 +113,22 @@ public class PongView extends View implements OnTouchListener, OnKeyListener, On
     private MediaPlayer mWallHit, mPaddleHit;
     private MediaPlayer mMissTone;
     private MediaPlayer mWinTone;
+
+    /**
+     * Myo states
+     */
+    private boolean myoRedLeft  = false;
+    private boolean myoRedRight = false;
+    private boolean myoRedRest  = true;
+
+    private boolean myoBlueLeft  = false;
+    private boolean myoBlueRight = false;
+    private boolean myoBlueRest  = true;
+
+    /**
+     * Myo consts
+     */
+    private static final int myoMoveStep = 5;
 
     /**
      * An overloaded class that repaints this view in a separate thread.
@@ -211,17 +226,41 @@ public class PongView extends View implements OnTouchListener, OnKeyListener, On
             mBallAngle = RNG.nextInt(360);
         }
 
+        // Move paddles with myo
+        if (myoRedLeft) {
+            int targetPaddlePosition = Math.min(getWidth(), Math.max(0, mRedPaddleRect.centerX() - myoMoveStep));
+
+            movePaddleToward(mRedPaddleRect, 8 * mPaddleSpeed, targetPaddlePosition);
+            System.out.println("doGameLogic: RED PADDLE MOVED LEFT");
+        } else if (myoRedRight) {
+            int targetPaddlePosition = Math.min(getWidth(), Math.max(0, mRedPaddleRect.centerX() + myoMoveStep));
+
+            movePaddleToward(mRedPaddleRect, 8 * mPaddleSpeed, targetPaddlePosition);
+            System.out.println("doGameLogic: RED PADDLE MOVED RIGHT");
+        }
+
+        if (myoBlueLeft) {
+            int targetPaddlePosition = Math.min(getWidth(), Math.max(0, mBluePaddleRect.centerX() - myoMoveStep));
+
+            movePaddleToward(mBluePaddleRect, 8 * mPaddleSpeed, targetPaddlePosition);
+            System.out.println("doGameLogic: BLUE PADDLE MOVED LEFT");
+        } else if (myoBlueRight) {
+            int targetPaddlePosition = Math.min(getWidth(), Math.max(0, mBluePaddleRect.centerX() + myoMoveStep));
+
+            movePaddleToward(mBluePaddleRect, 8 * mPaddleSpeed, targetPaddlePosition);
+            System.out.println("doGameLogic: BLUE PADDLE MOVED RIGHT");
+        }
+
         // Do some basic paddle AI
         if (!mRedIsPlayer)
             doAI(mRedPaddleRect);
-        else
-            movePaddleTorward(mRedPaddleRect, 8 * mPaddleSpeed, mRedLastTouch);
-
+//        else
+//            movePaddleToward(mRedPaddleRect, 8 * mPaddleSpeed, mRedLastTouch);
 
         if (!mBlueIsPlayer)
             doAI(mBluePaddleRect);
-        else
-            movePaddleTorward(mBluePaddleRect, 8 * mPaddleSpeed, mBlueLastTouch);
+//        else
+//            movePaddleToward(mBluePaddleRect, 8 * mPaddleSpeed, mBlueLastTouch);
 
         // See if all is lost
         if (mBallPosition.getY() >= getHeight()) {
@@ -265,7 +304,7 @@ public class PongView extends View implements OnTouchListener, OnKeyListener, On
      * @param speed, the speed at which the paddle moves at maximum.
      * @param x,     the x-coordinate to move to.
      */
-    private void movePaddleTorward(Rect r, int speed, float x) {
+    private void movePaddleToward(Rect r, int speed, float x) {
         int dx = (int) Math.abs(r.centerX() - x);
 
         if (x < r.centerX()) {
@@ -290,7 +329,7 @@ public class PongView extends View implements OnTouchListener, OnKeyListener, On
 
         // Special case: move torward the center if the ball is blinking
         if (mBallCounter > 0)
-            movePaddleTorward(cpu, mPaddleSpeed, getWidth() / 2);
+            movePaddleToward(cpu, mPaddleSpeed, getWidth() / 2);
 
         // Something is wrong if vy = 0.. let's wait until things fix themselves
         if (vy == 0) return;
@@ -343,7 +382,7 @@ public class PongView extends View implements OnTouchListener, OnKeyListener, On
         int salt = (int) (System.currentTimeMillis() / 10000);
         Random r = new Random(cpu.centerY() + mBallAngle + salt);
         x += r.nextInt(2 * PADDLE_WIDTH - (PADDLE_WIDTH / 5)) - PADDLE_WIDTH + (PADDLE_WIDTH / 10);
-        movePaddleTorward(cpu, mPaddleSpeed, x);
+        movePaddleToward(cpu, mPaddleSpeed, x);
 
         long stop = System.currentTimeMillis();
 
@@ -889,5 +928,48 @@ public class PongView extends View implements OnTouchListener, OnKeyListener, On
             mp.setVolume(0.2f, 0.2f);
             mp.start();
         }
+    }
+
+    /*** MYO STATE STUFF ***/
+    public void myoRedResetState() {
+        myoRedLeft = false;
+        myoRedRight = false;
+        myoRedRest = false;
+    }
+
+    public void myoBlueResetState() {
+        myoBlueLeft  = false;
+        myoBlueRight = false;
+        myoBlueRest  = false;
+    }
+
+    public void setMyoRedLeftState() {
+        myoRedResetState();
+        myoRedLeft = true;
+    }
+
+    public void setMyoRedRightState() {
+        myoRedResetState();
+        myoRedRight = true;
+    }
+
+    public void setMyoRedRestState() {
+        myoRedResetState();
+        myoRedRest = true;
+    }
+
+    public void setMyoBlueLeftState() {
+        myoBlueResetState();
+        myoBlueLeft = true;
+    }
+
+    public void setMyoBlueRightState() {
+        myoBlueResetState();
+        myoBlueRight = true;
+    }
+
+    public void setMyoBlueRestState() {
+        myoBlueResetState();
+        myoBlueRest = true;
     }
 }

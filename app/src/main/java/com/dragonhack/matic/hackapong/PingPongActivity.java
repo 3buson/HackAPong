@@ -108,7 +108,39 @@ public class PingPongActivity extends Activity {
 
         @Override
         public void onPose(Myo myo, long timestamp, Pose pose) {
+            System.out.println("onPose: Myo " + identifyMyo(myo) + " onPose (" + pose.toString() + ") fired");
+
             mAdapter.setMessage(myo, "Myo " + identifyMyo(myo) + " switched to pose " + pose.toString() + ".");
+
+            if (mKnownMyos.get(0) == myo) {
+                // LEFT
+                if (pose.toString().equals(pose.WAVE_IN.toString())) {
+                    mPongView.setMyoRedLeftState();
+                }
+                // RIGHT
+                else if (pose.toString().equals(pose.WAVE_OUT.toString())) {
+                    mPongView.setMyoRedRightState();
+                }
+                // OTHER
+                else {
+                    mPongView.setMyoRedRestState();
+                }
+            } else if (mKnownMyos.get(1) == myo) {
+                // LEFT
+                if (pose.toString().equals(pose.WAVE_IN.toString())) {
+                    mPongView.setMyoBlueLeftState();
+                }
+                // RIGHT
+                else if (pose.toString().equals(pose.WAVE_OUT.toString())) {
+                    mPongView.setMyoBlueRightState();
+                }
+                // OTHER
+                else {
+                    mPongView.setMyoBlueRestState();
+                }
+            } else {
+                System.err.print("UNKNOWN MYO !!!");
+            }
         }
     };
     /*** END MYO STUFF ***/
