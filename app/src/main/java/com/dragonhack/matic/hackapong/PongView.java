@@ -228,12 +228,12 @@ public class PongView extends View implements OnTouchListener, OnKeyListener, On
 
         // Move paddles with myo
         if (myoRedLeft) {
-            int targetPaddlePosition = Math.min(getWidth(), Math.max(0, mRedPaddleRect.centerX() - myoMoveStep));
+            int targetPaddlePosition = Math.min(getWidth(), Math.max(0, mRedPaddleRect.centerX() + myoMoveStep));
 
             movePaddleToward(mRedPaddleRect, 8 * mPaddleSpeed, targetPaddlePosition);
             System.out.println("doGameLogic: RED PADDLE MOVED LEFT");
         } else if (myoRedRight) {
-            int targetPaddlePosition = Math.min(getWidth(), Math.max(0, mRedPaddleRect.centerX() + myoMoveStep));
+            int targetPaddlePosition = Math.min(getWidth(), Math.max(0, mRedPaddleRect.centerX() - myoMoveStep));
 
             movePaddleToward(mRedPaddleRect, 8 * mPaddleSpeed, targetPaddlePosition);
             System.out.println("doGameLogic: RED PADDLE MOVED RIGHT");
