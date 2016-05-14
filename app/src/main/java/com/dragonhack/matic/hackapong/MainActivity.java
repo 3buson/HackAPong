@@ -37,11 +37,6 @@ public class MainActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    public void goToMyoConnect(View view) {
-        Intent intent = new Intent(this, MultipleMyosActivity.class);
-        startActivity(intent);
-    }
-
     public void goToPingPong(View view) {
         Intent intent = new Intent(this, PingPongActivity.class);
         startActivity(intent);
