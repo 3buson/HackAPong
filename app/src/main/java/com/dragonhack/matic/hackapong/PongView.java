@@ -100,7 +100,7 @@ public class PongView extends View implements OnTouchListener, OnKeyListener, On
     /**
      * These static variables control a few constants for the game.
      */
-    private static final int BALL_RADIUS = 4;
+    private static final int BALL_RADIUS = 10;
     private static final int PADDLE_THICKNESS = 10;
     private static final int PADDLE_WIDTH = 40;
     private static final int PADDING = 3;
@@ -821,11 +821,6 @@ public class PongView extends View implements OnTouchListener, OnKeyListener, On
             mCurrentState = State.Stopped;
         }
     }
-
-    public boolean titleShowing() {
-        return showTitle;
-    }
-
 
     public boolean onKey(View v, int keyCode, KeyEvent event) {
         return false;
