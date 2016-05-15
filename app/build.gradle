@@ -30,4 +30,5 @@ dependencies {
     }
 
     compile('com.thalmic:myosdk:0.10.+@aar')
+    compile 'com.squareup.retrofit2:retrofit:2.0.2'
 }

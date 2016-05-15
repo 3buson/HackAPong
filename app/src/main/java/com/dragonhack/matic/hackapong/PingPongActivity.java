@@ -7,6 +7,7 @@ import com.thalmic.myo.DeviceListener;
 import com.thalmic.myo.Hub;
 import com.thalmic.myo.Myo;
 import com.thalmic.myo.Pose;
+import com.thalmic.myo.Vector3;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -160,6 +161,15 @@ public class PingPongActivity extends Activity {
                 }
             } else {
                 System.err.print("UNKNOWN MYO !!!");
+            }
+        }
+
+        @Override
+        public void onAccelerometerData(Myo myo, long timestamp, Vector3 acc) {
+            if (myo == mKnownMyos.get(0)) {
+                mPongView.setRedAcc(acc);
+            } else {
+                mPongView.setBlueAcc(acc);
             }
         }
     };
