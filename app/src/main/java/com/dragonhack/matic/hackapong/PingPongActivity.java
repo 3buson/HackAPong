@@ -10,6 +10,9 @@ import com.thalmic.myo.Pose;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.Intent;
+import android.graphics.Color;
+import android.os.AsyncTask;
 import android.os.Handler;
 import android.os.PowerManager;
 import android.os.Bundle;
@@ -24,12 +27,26 @@ import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.ListView;
 import android.widget.Toast;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.ProtocolException;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 
 public class PingPongActivity extends Activity {
+    protected String uid1;
+    protected String uid2;
+
     /*** MYO STUFF ***/
     private static final String TAG = "MultipleMyosActivity";
 
@@ -46,7 +63,7 @@ public class PingPongActivity extends Activity {
     private class MyoAdapter extends ArrayAdapter<String> {
 
         public MyoAdapter(Context context, int count) {
-            super(context, android.R.layout.simple_list_item_1);
+            super(context, R.layout.custom_textview);
 
             // Initialize adapter with items for each expected Myo.
             for (int i = 0; i < count; i++) {
@@ -90,6 +107,9 @@ public class PingPongActivity extends Activity {
 
                 mMyoView.setVisibility(View.INVISIBLE);
                 mPongView.setVisibility(View.VISIBLE);
+
+                Button b = (Button) findViewById(R.id.buttonPlay);
+                b.setBackgroundColor(Color.WHITE);
             }
 
             // Now that we've added it to our list, get our short ID for it and print it out.
@@ -165,10 +185,17 @@ public class PingPongActivity extends Activity {
         }
     }
     /*** END PONG STUFF ***/
+    ArrayList<String> aa = new ArrayList<String>();
+    ListView lv = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        Intent intent = getIntent();
+        uid1 = intent.getStringExtra("uid1");
+        uid2 = intent.getStringExtra("uid2");
+
 
         /*** PONG STUFF ***/
         requestWindowFeature(Window.FEATURE_NO_TITLE);
@@ -176,6 +203,11 @@ public class PingPongActivity extends Activity {
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
         setContentView(R.layout.pong_view);
+
+        ArrayAdapter<String> adapter = new ArrayAdapter<String>(PingPongActivity.this, R.layout.custom_textview, aa);
+        lv = (ListView) findViewById(R.id.list);
+        lv.setAdapter(adapter);
+
         mPongView = (PongView) findViewById(R.id.pong);
         mPongView.update();
         mRefresher = new RefreshHandler();
@@ -279,14 +311,6 @@ public class PingPongActivity extends Activity {
             boolean flag = false;
 
             switch (id) {
-                case R.id.menu_0p:
-                    flag = true;
-                    mPongView.setPlayerControl(false, false);
-                    break;
-                case R.id.menu_1p:
-                    flag = true;
-                    mPongView.setPlayerControl(false, true);
-                    break;
                 case R.id.menu_2p:
                     flag = true;
                     mPongView.setPlayerControl(true, true);
@@ -322,6 +346,20 @@ public class PingPongActivity extends Activity {
             mAboutBox.hide();
             mAboutBox = null;
         }
+    }
+
+    public void startPlaying(View view) {
+        boolean flag = true;
+        mPongView.setPlayerControl(true, true);
+        if (flag) {
+            mPongView.setShowTitle(false);
+            mPongView.newGame();
+        }
+
+        Button b = (Button) findViewById(R.id.buttonPlay);
+        b.setVisibility(View.INVISIBLE);
+
+
     }
 
     public static final String DB_PREFS = "Pong";

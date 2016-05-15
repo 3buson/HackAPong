@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
-    android:layout_height="fill_parent">
+    android:layout_height="fill_parent"
+    android:background="@drawable/pong">
 
     <ListView xmlns:android="http://schemas.android.com/apk/res/android"
         xmlns:tools="http://schemas.android.com/tools"
@@ -20,5 +21,17 @@
     <RelativeLayout
         android:layout_width="fill_parent"
         android:layout_height="fill_parent" >
+
+        <Button
+            android:layout_width="200dp"
+            android:layout_height="50dp"
+            android:text="Play"
+            android:id="@+id/buttonPlay"
+            android:onClick="startPlaying"
+            android:layout_centerVertical="true"
+            android:layout_centerHorizontal="true"
+
+            />
     </RelativeLayout>
+
 </FrameLayout>

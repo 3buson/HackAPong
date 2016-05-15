@@ -22,8 +22,8 @@
     <string name="menu_prompt">Press Menu to start</string>
 
     <string name="new_game">New game</string>
-    <string name="red_wins">Red Wins!</string>
-    <string name="blue_wins">Blue Wins!</string>
+    <string name="red_wins">Matevž Wins!</string>
+    <string name="blue_wins">Nina Wins!</string>
 
     <string name="join_in">Touch to join in!</string>
     <string name="pause">Pause</string>
