@@ -879,8 +879,8 @@ public class PongView extends View implements OnTouchListener, OnKeyListener, On
      * Reset the lives, paddles and the like for a new game.
      */
     public void newGame() {
-        mRedLives = 3;
-        mBlueLives = 3;
+        mRedLives = 5;
+        mBlueLives = 5;
         mFrameSkips = 5;
 
         resetPaddles();
