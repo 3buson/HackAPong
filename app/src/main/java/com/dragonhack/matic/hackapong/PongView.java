@@ -1061,18 +1061,13 @@ public class PongView extends View implements OnTouchListener, OnKeyListener, On
             HttpURLConnection conn = null;
 
             try {
-                String urlParameters  = "uid1=" + 1 + "&reflections1=" + hits1 + "&wins1=" + wins1 +  "&uid2=" + 3 + "&reflections2=" + hits2 + "&wins2=" + wins2;
-                byte[] postData       = urlParameters.getBytes(StandardCharsets.UTF_8);
-                int    postDataLength = postData.length;
-
-                url = new URL("http://hackapong.herokuapp.com/");
+                url = new URL("http://hackapong.herokuapp.com/scores.json");
 
                 conn = (HttpURLConnection) url.openConnection();
 
                 conn.setRequestMethod("POST");
                 conn.setRequestProperty("Content-Type", "application/json");
                 conn.setRequestProperty("charset", "utf-8");
-                conn.setRequestProperty("Content-Length", Integer.toString(postDataLength));
                 conn.setRequestProperty("uid1", "1");
                 conn.setRequestProperty("uid2", "3");
                 conn.setRequestProperty("reflections1", Integer.toString(hits1));
@@ -1083,7 +1078,6 @@ public class PongView extends View implements OnTouchListener, OnKeyListener, On
 
                 try {
                     DataOutputStream wr = new DataOutputStream(conn.getOutputStream());
-                    wr.write(postData);
                     wr.flush();
                     wr.close();
                     System.out.println("SENT");
