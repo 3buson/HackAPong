@@ -13,6 +13,7 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.Random;
 
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
@@ -35,6 +36,8 @@ import android.view.View;
 import android.view.View.OnKeyListener;
 import android.view.View.OnTouchListener;
 import android.widget.Toast;
+
+import com.thalmic.myo.Vector3;
 
 /**
  * This class is the main viewing window for the Pong game. All the game's
@@ -80,7 +83,7 @@ public class PongView extends View implements OnTouchListener, OnKeyListener, On
      * the paddle hits the ball. As the game progresses, the framerate will speed up to make it more
      * difficult for human players.
      */
-    private int mFramesPerSecond = 30;
+    private int mFramesPerSecond = 45;
     private int mFrameSkips = 5;
     private long mLastFrame = 0;
 
@@ -94,7 +97,7 @@ public class PongView extends View implements OnTouchListener, OnKeyListener, On
     private int mDX;
     private int mDY;
     private int mBallCounter = 60;
-    private int mBallSpeed = 6;
+    private int mBallSpeed = 10;
     private int mPaddleSpeed = mBallSpeed - 2;
 
     /**
@@ -109,7 +112,7 @@ public class PongView extends View implements OnTouchListener, OnKeyListener, On
      */
     private static final int BALL_RADIUS = 10;
     private static final int PADDLE_THICKNESS = 15;
-    private static final int PADDLE_WIDTH = 60;
+    private static final int PADDLE_WIDTH = 120;
     private static final int PADDING = 3;
     private static final int SCROLL_SENSITIVITY = 80;
 
@@ -142,6 +145,16 @@ public class PongView extends View implements OnTouchListener, OnKeyListener, On
     private int hits2 = 0;
     private int wins1 = 0;
     private int wins2 = 0;
+
+    private Vector3 mRedAcc = new Vector3();
+    private Vector3 mBlueAcc = new Vector3();
+    private double mRedX = getWidth() / 2;
+    private double mBlueX = getWidth() / 2;
+    private double mRedSpeed = 0;
+    private double mBlueSpeed = 0;
+    private double mFriction = 0.95;
+    private double mMagnet = 3;
+    private double mStrength = 3;
 
     /**
      * An overloaded class that repaints this view in a separate thread.
@@ -236,10 +249,12 @@ public class PongView extends View implements OnTouchListener, OnKeyListener, On
 
         // Shake it up if it appears to not be moving vertically
         if (py == mBallPosition.getY()) {
-            mBallAngle = RNG.nextInt(360);
+            //mBallAngle = RNG.nextInt(360);
+            resetBallAngle();
         }
 
         // Move paddles with myo
+        /*
         if (myoRedLeft) {
             int targetPaddlePosition = Math.min(getWidth(), Math.max(0, mRedPaddleRect.centerX() + myoMoveStep));
 
@@ -262,20 +277,31 @@ public class PongView extends View implements OnTouchListener, OnKeyListener, On
 
             movePaddleToward(mBluePaddleRect, 8 * mPaddleSpeed, targetPaddlePosition);
             System.out.println("doGameLogic: BLUE PADDLE MOVED RIGHT");
-        }
+        }*/
+
+        // move paddles
+        updatePaddles();
 
         // See if all is lost
         if (mBallPosition.getY() >= getHeight()) {
             requestNewRound = true;
             mBlueLives = Math.max(0, mBlueLives - 1);
 
-            if (mBlueLives != 0 || showTitle) playSound(mMissTone);
-            else playSound(mWinTone);
+            if (mBlueLives != 0 || showTitle) {
+                playSound(mMissTone);
+            } else {
+                playSound(mWinTone);
+                redWins();
+            }
         } else if (mBallPosition.getY() <= 0) {
             requestNewRound = true;
             mRedLives = Math.max(0, mRedLives - 1);
-            if (mRedLives != 0 || showTitle) playSound(mMissTone);
-            else playSound(mWinTone);
+            if (mRedLives != 0 || showTitle) {
+                playSound(mMissTone);
+            } else {
+                playSound(mWinTone);
+                blueWins();
+            }
         }
 
         // Handle bouncing off of a wall
@@ -320,13 +346,51 @@ public class PongView extends View implements OnTouchListener, OnKeyListener, On
         }
     }
 
+    private void updatePaddles() {
+        double w = getWidth();
+
+        /*mBlueSpeed += Math.pow(-mBlueAcc.z(), 1.0) * mStrength - ((mBlueX / w) - 0.5) * mMagnet;
+        mRedSpeed += Math.pow(mRedAcc.z(), 1.0) * mStrength - ((mRedX / w) - 0.5) * mMagnet;
+        mBlueSpeed *= mFriction;
+        mRedSpeed *= mFriction;
+        mBlueX += mBlueSpeed;
+        mRedX += mRedSpeed;*/
+
+        double targetBlue = w / 2 - mBlueAcc.z() * w * 0.75;
+        double targetRed = w / 2 + mRedAcc.z() * w * 0.75;
+        mBlueX += (targetBlue - mBlueX) * 0.6;
+        mRedX += (targetRed - mRedX) * 0.6;
+
+
+        if (mBlueX < 0) {
+            mBlueX = 0;
+            mBlueSpeed = 0;
+        } else if (mBlueX > w) {
+            mBlueX = w;
+            mBlueSpeed = 0;
+        }
+        if (mRedX < 0) {
+            mRedX = 0;
+            mRedSpeed = 0;
+        } else if (mRedX > w) {
+            mRedX = w;
+            mRedSpeed = 0;
+        }
+
+        mBluePaddleRect.left = (int)mBlueX - PADDLE_WIDTH / 2;
+        mBluePaddleRect.right = mBluePaddleRect.left + PADDLE_WIDTH;
+
+        mRedPaddleRect.left = (int)mRedX - PADDLE_WIDTH / 2;
+        mRedPaddleRect.right = mRedPaddleRect.left + PADDLE_WIDTH;
+    }
+
     /**
      * Knocks up the framerate a bit to keep it difficult.
      */
     private void increaseDifficulty() {
-        if (mFramesPerSecond < 40) {
+        if (mFramesPerSecond < 100) {
             mFramesPerSecond += mFrameSkips;
-            mFrameSkips++;
+            //mFrameSkips++;
         }
     }
 
@@ -354,11 +418,17 @@ public class PongView extends View implements OnTouchListener, OnKeyListener, On
         }
 
 
-        int dA = 40 * Math.abs(x - r.centerX()) / Math.abs(r.left - r.centerX());
+        /*int dA = 40 * Math.abs(x - r.centerX()) / Math.abs(r.left - r.centerX());
         if (mBallAngle > 180 && x < r.centerX() || mBallAngle < 180 && x > r.centerX()) {
             mBallAngle = safeRotate(mBallAngle, -dA);
         } else if (mBallAngle > 180 && x > r.centerX() || mBallAngle < 180 && x < r.centerX()) {
             mBallAngle = safeRotate(mBallAngle, dA);
+        }*/
+        double alpha = ((x - r.left) / (double)(r.width()) - 0.5) * 2;
+        if (mBallAngle < 180) {
+            mBallAngle = 90 - (int)(alpha * 60);
+        } else {
+            mBallAngle = 270 + (int)(alpha * 60);
         }
     }
 
@@ -473,7 +543,7 @@ public class PongView extends View implements OnTouchListener, OnKeyListener, On
 
         realignPaddles();
         resetBall();
-        mFramesPerSecond = 30;
+        mFramesPerSecond = 45;
         mBallCounter = 60;
     }
 
@@ -507,8 +577,30 @@ public class PongView extends View implements OnTouchListener, OnKeyListener, On
      */
     private void resetBall() {
         mBallPosition.set(getWidth() / 2, getHeight() / 2);
-        mBallAngle = RNG.nextInt(360);
+        resetBallAngle();
         mBallCounter = 60;
+    }
+
+    private void resetBallAngle() {
+        mBallAngle = 0;
+        int direction = RNG.nextInt(4);
+        int baseAngle = 60;
+        int angleRand = 20;
+        int randomAngle = RNG.nextInt(angleRand * 2) - angleRand;
+        switch (direction) {
+            case 0:
+                mBallAngle = baseAngle + randomAngle;
+                break;
+            case 1:
+                mBallAngle = 180 - baseAngle + randomAngle;
+                break;
+            case 2:
+                mBallAngle = 180 + baseAngle + randomAngle;
+                break;
+            case 3:
+                mBallAngle = 360 - baseAngle + randomAngle;
+                break;
+        }
     }
 
     /**
@@ -571,6 +663,17 @@ public class PongView extends View implements OnTouchListener, OnKeyListener, On
         mPaint.setColor(Color.WHITE);
 
         canvas.drawRect(mRedPaddleRect, mPaint);
+
+        // draw acc
+
+        /*int x = getWidth() / 2;
+        int y = getHeight() / 2;
+        double size = 100;
+        mPaint.setColor(Color.RED);
+        canvas.drawLine(x, y, x + (int) (mRedAcc.z() * size), y + (int) (mRedAcc.y() * size), mPaint);
+        mPaint.setColor(Color.BLUE);
+        canvas.drawLine(x, y, x + (int) (mBlueAcc.z() * size), y + (int) (mBlueAcc.y() * size), mPaint);
+        mPaint.setColor(Color.WHITE);*/
 
 
         if (gameRunning() && mRedIsPlayer && mCurrentState == State.Running)
@@ -654,41 +757,11 @@ public class PongView extends View implements OnTouchListener, OnKeyListener, On
             if (mBlueLives == 0) {
                 s = context.getString(R.string.red_wins);
                 mPaint.setColor(Color.WHITE);
-
-                wins1++;
-
-                // send scores
-                System.out.println("-------------SCORE-------------");
-                System.out.println(hits1);
-                System.out.println(hits2);
-                System.out.println(wins1);
-                System.out.println(wins2);
-                System.out.println("-------------------------------");
-
-                try {
-                    new SendScoreTask().execute(new URL("http://hackapong.herokuapp.com/scores.json"));
-                } catch (MalformedURLException e) {
-                    e.printStackTrace();
-                }
+                mPaint.setTextSize(40);
             } else if (mRedLives == 0) {
                 s = context.getString(R.string.blue_wins);
                 mPaint.setColor(Color.WHITE);
-
-                wins2++;
-
-                // send scores
-                System.out.println("-------------SCORE-------------");
-                System.out.println(hits1);
-                System.out.println(hits2);
-                System.out.println(wins1);
-                System.out.println(wins2);
-                System.out.println("-------------------------------");
-
-                try {
-                    new SendScoreTask().execute(new URL("http://hackapong.herokuapp.com/scores.json"));
-                } catch (MalformedURLException e) {
-                    e.printStackTrace();
-                }
+                mPaint.setTextSize(40);
             }
 
             int width = (int) mPaint.measureText(s);
@@ -708,6 +781,34 @@ public class PongView extends View implements OnTouchListener, OnKeyListener, On
         long stop = System.currentTimeMillis();
 
 //        Log.d(TAG, String.format("Draw took %d ms", stop - start));
+    }
+
+    private void redWins() {
+        wins1++;
+
+        // send scores
+        System.out.println("-------------SCORE-------------");
+        System.out.println(hits1);
+        System.out.println(hits2);
+        System.out.println(wins1);
+        System.out.println(wins2);
+        System.out.println("-------------------------------");
+
+        new SendScoreTask().execute("");
+    }
+
+    private void blueWins() {
+        wins2++;
+
+        // send scores
+        System.out.println("-------------SCORE-------------");
+        System.out.println(hits1);
+        System.out.println(hits2);
+        System.out.println(wins1);
+        System.out.println(wins2);
+        System.out.println("-------------------------------");
+
+        new SendScoreTask().execute("");
     }
 
     /**
@@ -778,9 +879,9 @@ public class PongView extends View implements OnTouchListener, OnKeyListener, On
      * Reset the lives, paddles and the like for a new game.
      */
     public void newGame() {
-        mRedLives = 3;
-        mBlueLives = 3;
-        mFrameSkips = 1;
+        mRedLives = 5;
+        mBlueLives = 5;
+        mFrameSkips = 5;
 
         resetPaddles();
         nextRound();
@@ -886,6 +987,14 @@ public class PongView extends View implements OnTouchListener, OnKeyListener, On
         }
     }
 
+    public void setRedAcc(Vector3 acc) {
+        mRedAcc = acc;
+    }
+
+    public void setBlueAcc(Vector3 acc) {
+        mBlueAcc = acc;
+    }
+
     /*** MYO STATE STUFF ***/
     public void myoRedResetState() {
         myoRedLeft = false;
@@ -945,32 +1054,33 @@ public class PongView extends View implements OnTouchListener, OnKeyListener, On
         return wins2;
     }
 
-    private class SendScoreTask extends AsyncTask<URL, Integer, String> {
+    private class SendScoreTask extends AsyncTask<String, Integer, String> {
         @Override
-        protected String doInBackground(URL... params) {
+        protected String doInBackground(String... params) {
             URL url = null;
             HttpURLConnection conn = null;
 
             try {
-                String urlParameters  = "username1=" + 3 + "&reflections1=" + hits1 + "&wins1=" + wins1 +  "&username2=" + 4 + "&reflections2=" + hits2 + "&wins2=" + wins2;
-                byte[] postData       = urlParameters.getBytes(StandardCharsets.UTF_8);
-                int    postDataLength = postData.length;
-
-                url = new URL("http://hackapong.herokuapp.com/score.json");
+                url = new URL("http://hackapong.herokuapp.com/scores.json");
 
                 conn = (HttpURLConnection) url.openConnection();
 
                 conn.setRequestMethod("POST");
                 conn.setRequestProperty("Content-Type", "application/json");
                 conn.setRequestProperty("charset", "utf-8");
-                conn.setRequestProperty("Content-Length", Integer.toString(postDataLength));
-                conn.setUseCaches(false);
+                conn.setRequestProperty("uid1", "1");
+                conn.setRequestProperty("uid2", "3");
+                conn.setRequestProperty("reflections1", Integer.toString(hits1));
+                conn.setRequestProperty("reflections2", Integer.toString(hits2));
+                conn.setRequestProperty("wins1", Integer.toString(wins1));
+                conn.setRequestProperty("wins2", Integer.toString(wins2));
+                conn.setDoOutput(true);
 
                 try {
                     DataOutputStream wr = new DataOutputStream(conn.getOutputStream());
-                    wr.write(postData);
                     wr.flush();
                     wr.close();
+                    System.out.println("SENT");
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -980,6 +1090,10 @@ public class PongView extends View implements OnTouchListener, OnKeyListener, On
                 e.printStackTrace();
             } catch (IOException e) {
                 e.printStackTrace();
+            } finally {
+                if (conn != null) {
+                    conn.disconnect();
+                }
             }
 
             return "success";
