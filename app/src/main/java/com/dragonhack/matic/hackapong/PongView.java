@@ -253,7 +253,7 @@ public class PongView extends View implements OnTouchListener, OnKeyListener, On
             resetBallAngle();
         }
 
-        // Move paddles with myo
+        // Move paddles with myo gestures
         /*
         if (myoRedLeft) {
             int targetPaddlePosition = Math.min(getWidth(), Math.max(0, mRedPaddleRect.centerX() + myoMoveStep));
@@ -279,7 +279,7 @@ public class PongView extends View implements OnTouchListener, OnKeyListener, On
             System.out.println("doGameLogic: BLUE PADDLE MOVED RIGHT");
         }*/
 
-        // move paddles
+        // Move paddles with myo
         updatePaddles();
 
         // See if all is lost
@@ -664,7 +664,7 @@ public class PongView extends View implements OnTouchListener, OnKeyListener, On
 
         canvas.drawRect(mRedPaddleRect, mPaint);
 
-        // draw acc
+        // draw acc - DEBUG
 
         /*int x = getWidth() / 2;
         int y = getHeight() / 2;
